@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MU Options</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+:root{
+  --navy:#08172E; --panel:#0D2040; --accent:#2E9BDA; --teal:#1ECBD0;
+  --gold:#F5A623; --white:#F0F6FF; --muted:#7A94B8;
+  --border:rgba(255,255,255,0.09); --radius:12px; --success:#22C55E;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Syne',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;display:flex;flex-direction:column;}
+
+/* HEADER */
+header{background:linear-gradient(135deg,#08172E 0%,#112448 100%);border-bottom:2px solid var(--accent);padding:22px 36px;display:flex;align-items:center;gap:16px;}
+.logo{width:46px;height:46px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--teal));display:flex;align-items:center;justify-content:center;font-size:22px;}
+header h1{font-size:1.3rem;font-weight:800;letter-spacing:-.3px;}
+header p{font-size:.75rem;color:var(--muted);margin-top:2px;}
+
+main{flex:1;max-width:960px;width:100%;margin:0 auto;padding:40px 22px 60px;display:flex;flex-direction:column;gap:24px;}
+
+/* CARDS */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:28px;}
+
+/* STEP HEADER */
+.step{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.step-n{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:.82rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.step-label{font-size:1rem;font-weight:700;}
+
+/* DROP ZONE */
+#drop-zone{
+  border:2px dashed rgba(255,255,255,.2);border-radius:var(--radius);
+  padding:52px 24px;text-align:center;cursor:pointer;
+  transition:all .2s:position:relative;
+}
+#drop-zone:hover,#drop-zone.over{border-color:var(--accent);background:rgba(46,155,218,.07);}
+#drop-zone input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;}
+.dz-icon{font-size:3rem;margin-bottom:12px;}
+.dz-title{font-size:1.05rem;font-weight:700;margin-bottom:6px;}
+.dz-sub{font-size:.8rem;color:var(--muted);}
+.dz-formats{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
+.fmt-pill{padding:4px 12px;border-radius:99px;font-size:.65rem;font-weight:700;letter-spacing:.8px;font-family:'DM Mono',monospace;}
+.fmt-nsp{background:rgba(46,155,218,.15);color:#7DD3FC;border:1px solid rgba(46,155,218,.3);}
+.fmt-jn{background:rgba(245,166,35,.15);color:var(--gold);border:1px solid rgba(245,166,35,.3);}
+.fmt-tw{background:rgba(30,203,208,.15);color:var(--teal);border:1px solid rgba(30,203,208,.3);}
+
+/* FILE CHIPS */
+#file-list{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+.file-chip{display:flex;align-items:center;gap:12px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:10px;padding:12px 16px;}
+.fc-icon{font-size:1.5rem;flex-shrink:0;}
+.fc-info{flex:1;min-width:0;}
+.fc-name{font-size:.82rem;font-weight:700;color:#6EE7B7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fc-meta{font-size:.68rem;color:rgba(110,231,183,.7);margin-top:2px;display:flex;align-items:center;gap:8px;}
+.fc-type{padding:2px 8px;border-radius:99px;font-size:.6rem;font-weight:700;font-family:'DM Mono',monospace;}
+.fc-type.nsp {background:rgba(46,155,218,.2);color:#7DD3FC;}
+.fc-type.jeanneau{background:rgba(245,166,35,.2);color:var(--gold);}
+.fc-type.tidewater{background:rgba(30,203,208,.2);color:var(--teal);}
+.fc-type.unknown{background:rgba(255,255,255,.1);color:var(--muted);}
+.fc-type.pioneer{background:rgba(168,85,247,.2);color:#D8B4FE;border:1px solid rgba(168,85,247,.3);}
+.fc-type.jeanneau_msrp{background:rgba(245,166,35,.15);color:var(--gold);border:1px solid rgba(245,166,35,.3);}
+.fc-type.jeanneau_order{background:rgba(245,166,35,.2);color:#FFD580;border:1px solid rgba(245,166,35,.4);}
+.fc-type.gradywhite{background:rgba(239,68,68,.15);color:#FCA5A5;border:1px solid rgba(239,68,68,.3);}
+.fc-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:4px 8px;border-radius:6px;flex-shrink:0;transition:all .15s;}
+.fc-remove:hover{background:rgba(255,255,255,.1);color:#fff;}
+
+/* CLEAR ALL */
+#clear-all{display:none;margin-top:10px;background:none;border:1px solid rgba(255,255,255,.1);color:var(--muted);font-family:'Syne',sans-serif;font-size:.75rem;padding:6px 14px;border-radius:8px;cursor:pointer;transition:all .15s;}
+#clear-all:hover{border-color:rgba(255,255,255,.25);color:var(--white);}
+
+/* RUN BUTTON */
+#run-btn{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;padding:18px 32px;background:linear-gradient(135deg,var(--gold) 0%,#E8891A 100%);color:#fff;font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;border:none;border-radius:var(--radius);cursor:pointer;letter-spacing:.4px;transition:opacity .2s,transform .15s;box-shadow:0 6px 28px rgba(245,166,35,.3);}
+#run-btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important;}
+#run-btn:not(:disabled):hover{opacity:.92;transform:translateY(-1px);}
+#run-btn:not(:disabled):active{transform:translateY(0);}
+#run-hint{font-size:.8rem;color:var(--muted);margin-bottom:16px;line-height:1.6;}
+
+/* PROGRESS */
+#progress-wrap{display:none;margin-top:16px;}
+#prog-label{font-size:.75rem;color:var(--muted);margin-bottom:6px;}
+#prog-track{height:5px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;}
+#prog-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));border-radius:99px;width:0%;transition:width .4s ease;}
+
+/* STATS */
+.stats-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+.stat-pill{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:99px;padding:6px 15px;font-size:.73rem;display:flex;gap:8px;align-items:center;}
+.stat-pill strong{color:var(--teal);}
+
+/* MODEL TABS */
+.model-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.model-btn{padding:5px 13px;border-radius:6px;border:1px solid var(--border);background:rgba(255,255,255,.04);color:#C8D8EC;font-family:'DM Mono',monospace;font-size:.7rem;cursor:pointer;transition:all .15s;}
+.model-btn:hover,.model-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:.7rem;white-space:nowrap;}
+thead th{background:rgba(26,74,138,.6);color:var(--accent);padding:9px 14px;text-align:left;font-weight:500;border-bottom:1px solid var(--border);}
+tbody tr:nth-child(odd){background:rgba(255,255,255,.02);}
+tbody tr:nth-child(even){background:rgba(255,255,255,.045);}
+tbody td{padding:7px 14px;color:#C8D8EC;border-bottom:1px solid rgba(255,255,255,.04);max-width:300px;overflow:hidden;text-overflow:ellipsis;}
+tbody td.num{text-align:right;color:#7DD3FC;}
+.cat-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.62rem;font-weight:700;}
+.b-bm{background:#1E3A5F;color:#7DD3FC;}
+.b-ac{background:#1A3A2A;color:#6EE7B7;}
+.b-hc{background:#3D2E10;color:#FCD34D;}
+.b-bs{background:#3D1A1A;color:#FCA5A5;}
+.b-ot{background:#2A1A3D;color:#C4B5FD;}
+
+/* DOWNLOAD */
+#dl-section{display:none;border:2px solid var(--teal);background:rgba(30,203,208,.05);}
+#dl-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:18px 32px;background:linear-gradient(135deg,var(--accent) 0%,var(--teal) 100%);color:#fff;font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;border:none;border-radius:var(--radius);cursor:pointer;box-shadow:0 6px 24px rgba(46,155,218,.3);transition:opacity .2s,transform .15s;}
+#dl-btn:hover{opacity:.9;transform:translateY(-1px);}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:#1E3A2A;border:1px solid var(--success);color:#6EE7B7;padding:13px 20px;border-radius:10px;font-size:.82rem;font-weight:600;display:none;align-items:center;gap:10px;box-shadow:0 8px 30px rgba(0,0,0,.4);z-index:999;animation:su .3s ease;}
+@keyframes su{from{transform:translateY(16px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+/* TABS */
+.app-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:0;background:var(--panel);}
+.app-tab{padding:14px 28px;font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;
+  color:var(--muted);border:none;background:none;cursor:pointer;transition:all .2s;
+  border-bottom:3px solid transparent;margin-bottom:-2px;letter-spacing:.3px;}
+.app-tab:hover{color:var(--white);}
+.app-tab.active{color:var(--white);border-bottom-color:var(--accent);}
+.tab-panel{display:none;}
+.tab-panel.active{display:flex;flex-direction:column;gap:24px;}
+
+footer{text-align:center;padding:18px;font-size:.68rem;color:#2A3E58;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">⚓</div>
+  <div>
+    <h1>MU Options</h1>
+    <p>Drag &amp; drop dealer pricing files · Run · Download Lightspeed import</p>
+  </div>
+</header>
+
+<main style="padding-top:0;">
+
+  <!-- TAB BAR -->
+  <div class="app-tabs">
+    <button class="app-tab active" onclick="switchTab('options')">📋 MU Options</button>
+    <button class="app-tab" onclick="switchTab('baseunits')">🚤 Base Units</button>
+    <button class="app-tab" onclick="switchTab('supplier')">🏭 Supplier Mapping</button>
+  </div>
+
+  <!-- OPTIONS TAB -->
+  <div class="tab-panel active" id="tab-options" style="padding:36px 0 60px;">
+
+  <!-- STEP 1: DROP FILES -->
+  <div class="card">
+    <div class="step"><span class="step-n">1</span><span class="step-label">Drop your pricing file(s)</span></div>
+
+    <div id="drop-zone"
+         ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)"
+         onclick="document.getElementById('file-input').click()">
+      <input type="file" id="file-input" accept=".xlsx,.xls" multiple
+             onchange="filesChosen(this)" style="display:none;">
+      <div class="dz-icon">📂</div>
+      <div class="dz-title">Drag &amp; drop files here</div>
+      <div class="dz-sub">or click anywhere in this box to browse</div>
+      <div class="dz-formats">
+        <span class="fmt-pill fmt-nsp">NSP Cost Sheet</span>
+        <span class="fmt-pill fmt-jn">Jeanneau Net Price</span>
+        <span class="fmt-pill fmt-tw">Tidewater Pricing</span>
+      </div>
+    </div>
+    <!-- Explicit browse button — always works even when drag & drop is blocked -->
+    <button onclick="document.getElementById('file-input').click()" style="
+      margin-top:12px;width:100%;padding:13px;
+      background:rgba(46,155,218,.15);border:1px solid var(--accent);
+      color:var(--accent);border-radius:var(--radius);
+      font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;
+      cursor:pointer;transition:all .15s;">
+      📁 &nbsp;Browse &amp; Select File(s)
+    </button>
+
+    <div id="file-list"></div>
+    <button id="clear-all" onclick="clearAll()">✕ Clear all files</button>
+  </div>
+
+  <!-- STEP 2: RUN -->
+  <div class="card">
+    <div class="step"><span class="step-n">2</span><span class="step-label">Run</span></div>
+    <div id="run-hint">Drop your file(s) above — file type is detected automatically.</div>
+    <button id="run-btn" disabled onclick="runAnalysis()">▶&nbsp;&nbsp;Run</button>
+    <div id="progress-wrap">
+      <div id="prog-label">Parsing…</div>
+      <div id="prog-track"><div id="prog-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card" id="results-section" style="display:none;">
+    <div class="step"><span class="step-n" style="background:var(--teal);">3</span><span class="step-label">Results preview</span></div>
+    <div class="stats-bar" id="stats-bar"></div>
+    <div class="model-grid" id="model-grid"></div>
+    <div class="tbl-wrap"><table><thead id="tbl-head"></thead><tbody id="tbl-body"></tbody></table></div>
+  </div>
+
+  <!-- DOWNLOAD -->
+  <div class="card" id="dl-section" style="display:none;">
+    <div class="step"><span class="step-n" style="background:var(--teal);">4</span><span class="step-label">Download Lightspeed import file</span></div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;">
+      Contains the official <strong>Information</strong> tab and a fully populated <strong>Data</strong> tab — ready to upload into Lightspeed.
+    </div>
+    <button id="dl-btn" onclick="downloadLightspeed()">⬇️&nbsp;&nbsp;Download Lightspeed Import (.xlsx)</button>
+  </div>
+
+  </div><!-- end tab-options -->
+
+  <!-- BASE UNITS TAB -->
+  <div class="tab-panel" id="tab-baseunits" style="padding:36px 0 60px;">
+
+    <!-- STEP 1: DROP -->
+    <div class="card">
+      <div class="step"><span class="step-n">1</span><span class="step-label">Drop your pricing file(s)</span></div>
+      <div id="bu-drop-zone" ondragover="buDzOver(event)" ondragleave="buDzLeave()" ondrop="buDzDrop(event)"
+           onclick="document.getElementById('bu-file-input').click()"
+           style="border:2px dashed rgba(255,255,255,.18);border-radius:var(--radius);padding:40px 18px;text-align:center;cursor:pointer;transition:all .2s;position:relative;">
+        <input type="file" id="bu-file-input" accept=".xlsx,.xls" multiple onchange="buFilesChosen(this)" style="display:none;">
+        <div style="font-size:2rem;margin-bottom:8px;">📂</div>
+        <div style="font-size:.9rem;font-weight:700;margin-bottom:4px;">Drag &amp; drop files here</div>
+        <div style="font-size:.75rem;color:var(--muted);">or click to browse — same file types as MU Options</div>
+      </div>
+      <button onclick="document.getElementById('bu-file-input').click()" style="margin-top:12px;width:100%;padding:13px;background:rgba(46,155,218,.15);border:1px solid var(--accent);color:var(--accent);border-radius:var(--radius);font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .15s;">
+        📁 &nbsp;Browse &amp; Select File(s)
+      </button>
+      <div id="bu-file-list" style="margin-top:14px;display:flex;flex-direction:column;gap:10px;"></div>
+      <button id="bu-clear-all" onclick="buClearAll()" style="display:none;margin-top:10px;background:none;border:1px solid rgba(255,255,255,.1);color:var(--muted);font-family:'Syne',sans-serif;font-size:.75rem;padding:6px 14px;border-radius:8px;cursor:pointer;">✕ Clear all files</button>
+    </div>
+
+    <!-- STEP 2: RUN -->
+    <div class="card">
+      <div class="step"><span class="step-n">2</span><span class="step-label">Run</span></div>
+      <div id="bu-run-hint" style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">Drop your file(s) above, then click Run to generate base units.</div>
+      <button id="bu-run-btn" disabled onclick="buRunAnalysis()"
+              style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:16px 32px;background:linear-gradient(135deg,var(--gold) 0%,#E8891A 100%);color:#fff;font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;border:none;border-radius:var(--radius);cursor:pointer;letter-spacing:.4px;transition:opacity .2s,transform .15s;box-shadow:0 6px 28px rgba(245,166,35,.35);">
+        ▶&nbsp;&nbsp;Run
+      </button>
+      <div id="bu-progress-wrap" style="display:none;margin-top:14px;">
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:5px;" id="bu-prog-label">Parsing…</div>
+        <div style="height:5px;background:rgba(255,255,255,.08);border-radius:99px;overflow:hidden;">
+          <div id="bu-prog-fill" style="height:100%;background:linear-gradient(90deg,var(--gold),var(--accent));border-radius:99px;width:0%;transition:width .3s ease;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: RESULTS PREVIEW -->
+    <div class="card" id="bu-results-section" style="display:none;">
+      <div class="step"><span class="step-n" style="background:var(--teal);">3</span><span class="step-label">Results preview</span></div>
+      <div class="stats-bar" id="bu-stats"></div>
+      <div class="tbl-wrap">
+        <table><thead id="bu-tbl-head"></thead><tbody id="bu-tbl-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- STEP 4: DOWNLOAD -->
+    <div class="card" id="bu-dl-section" style="display:none;border:2px solid var(--teal);background:rgba(30,203,208,.05);">
+      <div class="step"><span class="step-n" style="background:var(--teal);">4</span><span class="step-label">Download Base Units import file</span></div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;">
+        Fills the official <strong>Base Units - Marine</strong> template — one row per model.
+        Stock Number, Class, Unit Type, Body Type, and specs are left blank for PM to complete.
+      </div>
+      <button id="bu-dl-btn" onclick="downloadBaseUnits()"
+              style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:18px 32px;background:linear-gradient(135deg,var(--accent) 0%,var(--teal) 100%);color:#fff;font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;border:none;border-radius:var(--radius);cursor:pointer;box-shadow:0 6px 24px rgba(46,155,218,.3);transition:opacity .2s,transform .15s;">
+        ⬇️&nbsp;&nbsp;Download Base Units Import (.xlsx)
+      </button>
+    </div>
+
+  </div><!-- end tab-baseunits -->
+
+  <!-- SUPPLIER MAPPING TAB -->
+  <div class="tab-panel" id="tab-supplier" style="padding:36px 0 60px;">
+
+    <div class="card">
+      <div class="step"><span class="step-n">1</span><span class="step-label">Drop your supplier file</span></div>
+      <div style="font-size:.82rem;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+        Drop a <strong>CSV or Excel</strong> file that has an <code style="background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;">oldSupplier</code> column formatted as
+        <code style="background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;">CODE-Supplier Name</code>.
+        The tool splits it into <strong>SupplierCode</strong> and <strong>SupplierName</strong> columns automatically.
+      </div>
+
+      <div id="sm-drop-zone" ondragover="smDzOver(event)" ondragleave="smDzLeave()" ondrop="smDzDrop(event)"
+           onclick="document.getElementById('sm-file-input').click()"
+           style="border:2px dashed rgba(255,255,255,.18);border-radius:var(--radius);padding:40px 18px;text-align:center;cursor:pointer;transition:all .2s;">
+        <input type="file" id="sm-file-input" accept=".csv,.xlsx,.xls" onchange="smFileChosen(this)" style="display:none;">
+        <div style="font-size:2rem;margin-bottom:8px;">📂</div>
+        <div style="font-size:.9rem;font-weight:700;margin-bottom:4px;">Drop supplier file here</div>
+        <div style="font-size:.75rem;color:var(--muted);">or click to browse — .csv, .xlsx, .xls</div>
+      </div>
+      <button onclick="document.getElementById('sm-file-input').click()" style="margin-top:12px;width:100%;padding:13px;background:rgba(46,155,218,.15);border:1px solid var(--accent);color:var(--accent);border-radius:var(--radius);font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;">
+        📁 &nbsp;Browse &amp; Select File
+      </button>
+      <div id="sm-file-chip" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="step"><span class="step-n">2</span><span class="step-label">Run</span></div>
+      <div id="sm-run-hint" style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">Drop your supplier file above, then click Run.</div>
+      <button id="sm-run-btn" disabled onclick="smRunAnalysis()"
+              style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:16px 32px;background:linear-gradient(135deg,var(--gold) 0%,#E8891A 100%);color:#fff;font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;border:none;border-radius:var(--radius);cursor:pointer;letter-spacing:.4px;box-shadow:0 6px 28px rgba(245,166,35,.35);">
+        ▶&nbsp;&nbsp;Run
+      </button>
+    </div>
+
+    <div class="card" id="sm-results-section" style="display:none;">
+      <div class="step"><span class="step-n" style="background:var(--teal);">3</span><span class="step-label">Results preview</span></div>
+      <div class="stats-bar" id="sm-stats"></div>
+      <div class="tbl-wrap">
+        <table><thead id="sm-tbl-head"></thead><tbody id="sm-tbl-body"></tbody></table>
+      </div>
+    </div>
+
+    <div class="card" id="sm-dl-section" style="display:none;border:2px solid var(--teal);background:rgba(30,203,208,.05);">
+      <div class="step"><span class="step-n" style="background:var(--teal);">4</span><span class="step-label">Download split supplier mapping file</span></div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:18px;">
+        Downloads an Excel file with <strong>Source, oldSupplier, SupplierCode, SupplierName</strong> columns — same format as the supplier mapping template.
+      </div>
+      <button id="sm-dl-btn" onclick="smDownload()"
+              style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:18px 32px;background:linear-gradient(135deg,var(--accent) 0%,var(--teal) 100%);color:#fff;font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;border:none;border-radius:var(--radius);cursor:pointer;box-shadow:0 6px 24px rgba(46,155,218,.3);">
+        ⬇️&nbsp;&nbsp;Download Supplier Mapping (.xlsx)
+      </button>
+    </div>
+
+  </div><!-- end tab-supplier -->
+
+</main>
+
+<div id="toast">✅ <span id="toast-msg"></span></div>
+<footer>MU Options · Lightspeed DMS Integration Tool</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let loadedFiles = [];   // [{name, buf, size, detectedType}]
+let parsedRows  = [];
+let activeModel = null;
+
+// ══════════════════════════════════════════
+// DRAG & DROP
+// ═══════════════════════════════════════════
+function dzOver(e)  { e.preventDefault(); document.getElementById('drop-zone').classList.add('over'); }
+function dzLeave()  { document.getElementById('drop-zone').classList.remove('over'); }
+function dzDrop(e)  { e.preventDefault(); dzLeave(); handleFiles(Array.from(e.dataTransfer.files)); }
+function filesChosen(input) { handleFiles(Array.from(input.files)); input.value=''; }
+
+function handleFiles(files) {
+  files.forEach(f => {
+    if (loadedFiles.find(x => x.name === f.name)) return; // skip duplicates
+    const reader = new FileReader();
+    reader.onload = e => {
+      const buf = e.target.result;
+      const type = detectType(f.name, buf);
+      loadedFiles.push({ name: f.name, buf, size: f.size, type });
+      renderFileList();
+      checkReady();
+    };
+    reader.readAsArrayBuffer(f);
+  });
+}
+
+// ═══════════════════════════════════════════
+// AUTO-DETECT FILE TYPE
+// ═══════════════════════════════════════════
+function detectType(name, buf) {
+  try {
+    const wb = XLSX.read(buf, { type:'array', sheetRows: 20, cellDates: false });
+
+    // TIDEWATER: has a sheet named 'list_byb_groups'
+    if (wb.SheetNames.includes('list_byb_groups')) return 'tidewater';
+
+    // Read first sheet content for fingerprinting
+    const ws0 = wb.Sheets[wb.SheetNames[0]];
+    if (!ws0) return guessFromName(name);
+    const raw0 = XLSX.utils.sheet_to_json(ws0, { header:1, defval:null, raw:true });
+    const flat0 = raw0.slice(0,18).flat().map(v => v ? String(v) : '').join(' ').toUpperCase();
+
+    if (/DEALER\s+NET\s+PRICES|W\/O VAT/.test(flat0))          return 'jeanneau';
+    if (/RECOMMENDED RETAIL PRICE|EXCLUDES VAT/.test(flat0))     return 'jeanneau_msrp';
+    if (/TO REQUEST OPTION|1 TO REQUEST/.test(flat0))            return 'jeanneau_order';
+    if (/GRADY.WHITE BOATS/.test(flat0))                         return 'gradywhite';
+    if (/NORMAL SELLING PRICE/.test(flat0))                      return 'nsp';
+    if (/PURCHASE AGREEMENT/.test(flat0) && /PIONEER/.test(flat0)) return 'pioneer';
+    if (/INTERNET\s*\/\s*MAP\s*PRICING/.test(flat0) && /ORDER\s*FORM/.test(flat0)) return 'sportsman';
+
+    // Extension fallback
+    return guessFromName(name);
+  } catch(e) {
+    console.warn('detectType error:', e);
+    return guessFromName(name);
+  }
+}
+
+function guessFromName(name) {
+  const n = name.toLowerCase();
+  if (n.includes('jeanneau') || n.includes('leader') || n.includes('nc_6') || n.endsWith('.xls')) return 'jeanneau';
+  if (n.includes('tidewater')) return 'tidewater';
+  if (n.includes('pioneer') || n.includes('islander') || n.includes('spf')) return 'pioneer';
+  if (n.includes('grady') || n.includes('gw-') || n.includes('gw_')) return 'gradywhite';
+  if (n.includes('nsp') || n.includes('nsp-cost')) return 'nsp';
+  if (/\bopen\b|\bheritage\b|\bmasters\b|\btournament\b/i.test(name)) return 'sportsman';
+  return 'unknown';
+}
+
+const TYPE_LABELS = { nsp:'NSP Cost Sheet', jeanneau:'Jeanneau Net Price', jeanneau_msrp:'Jeanneau MSRP', jeanneau_order:'Jeanneau Order Sheet', tidewater:'Tidewater Pricing', pioneer:'Pioneer Boats', gradywhite:'Grady-White', sportsman:'Sportsman Boats Order Form', unknown:'Unknown' };
+
+// ═══════════════════════════════════════════
+// FILE LIST UI
+// ═══════════════════════════════════════════
+function renderFileList() {
+  const el = document.getElementById('file-list');
+  el.innerHTML = loadedFiles.map((f,i) => `
+    <div class="file-chip">
+      <span class="fc-icon">📊</span>
+      <div class="fc-info">
+        <div class="fc-name">${f.name}</div>
+        <div class="fc-meta">
+          ${fmtBytes(f.size)}
+          <span class="fc-type ${f.type}">${TYPE_LABELS[f.type]||f.type}</span>
+        </div>
+      </div>
+      <button class="fc-remove" onclick="removeFile(${i})" title="Remove">✕</button>
+    </div>`).join('');
+  document.getElementById('clear-all').style.display = loadedFiles.length > 1 ? 'inline-block' : 'none';
+}
+
+function removeFile(i) {
+  loadedFiles.splice(i, 1);
+  renderFileList();
+  checkReady();
+  resetResults();
+}
+
+function clearAll() {
+  loadedFiles = [];
+  renderFileList();
+  checkReady();
+  resetResults();
+}
+
+function checkReady() {
+  const valid = loadedFiles.filter(f => f.type !== 'unknown');
+  const ready = valid.length > 0;
+  document.getElementById('run-btn').disabled = !ready;
+
+  if (!loadedFiles.length) {
+    document.getElementById('run-hint').textContent = 'Drop your file(s) above — file type is detected automatically.';
+  } else if (!ready) {
+    document.getElementById('run-hint').textContent = 'File type could not be detected. Check that you are using a supported pricing file.';
+  } else {
+    const summary = [...new Set(valid.map(f=>TYPE_LABELS[f.type]))].join(', ');
+    document.getElementById('run-hint').textContent = `${valid.length} file(s) ready — detected: ${summary}. Click Run to parse.`;
+  }
+}
+
+function resetResults() {
+  parsedRows = []; activeModel = null;
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('dl-section').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════
+// RUN
+// ═══════════════════════════════════════════
+function runAnalysis() {
+  parsedRows = [];
+  document.getElementById('progress-wrap').style.display = 'block';
+  document.getElementById('prog-fill').style.width = '0%';
+  document.getElementById('run-btn').disabled = true;
+
+  setTimeout(() => {
+    try {
+      const nspFiles            = loadedFiles.filter(f => f.type === 'nsp');
+      const jeanneauFiles       = loadedFiles.filter(f => f.type === 'jeanneau');
+      const jeanneauMsrpFiles   = loadedFiles.filter(f => f.type === 'jeanneau_msrp');
+      const jeanneauOrderFiles  = loadedFiles.filter(f => f.type === 'jeanneau_order');
+      const tidewaterFiles      = loadedFiles.filter(f => f.type === 'tidewater');
+      const pioneerFiles        = loadedFiles.filter(f => f.type === 'pioneer');
+      const gradywhiteFiles     = loadedFiles.filter(f => f.type === 'gradywhite');
+      const sportsmanFiles      = loadedFiles.filter(f => f.type === 'sportsman');
+
+      nspFiles.forEach(f             => parseNSP(f));
+      jeanneauFiles.forEach(f        => parseJeanneau(f));
+      jeanneauMsrpFiles.forEach(f    => parseJeanneauMSRP(f));
+      jeanneauOrderFiles.forEach(f   => parseJeanneauOrder(f));
+      tidewaterFiles.forEach(f       => parseTidewater(f));
+      pioneerFiles.forEach(f         => parsePioneer(f));
+      gradywhiteFiles.forEach(f      => parseGradyWhite(f));
+      sportsmanFiles.forEach(f       => parseSportsman(f));
+
+      document.getElementById('prog-fill').style.width = '100%';
+      showResults();
+    } catch(err) {
+      alert('Parsing error: ' + err.message);
+      console.error(err);
+    }
+    document.getElementById('progress-wrap').style.display = 'none';
+    document.getElementById('run-btn').disabled = false;
+  }, 60);
+}
+
+// ═══════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════
+function safeNum(v) {
+  if (v == null) return null;
+  if (typeof v === 'string') { v = v.replace(/[^\d.]/g,''); v = parseFloat(v); }
+  return (typeof v === 'number' && isFinite(v) && v > 0) ? v : null;
+}
+function cleanStr(v) { return v != null ? String(v).replace(/\xa0/g,' ').replace(/[\uf0dd\uf0b7]/g,'').trim() : ''; }
+function fmtBytes(b) { return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'; }
+function fmt$(v)     { return v!=null?'$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'—'; }
+function addRow(model,counter,desc,cat,msrp,cost,year,models,details=null) {
+  parsedRows.push({ model, optNum:`${model}-${String(counter).padStart(2,'0')}`, desc, cat, msrp, cost, fromYear:year, toYear:year, models, details });
+}
+
+// ═══════════════════════════════════════════
+// PARSER: NSP (.xlsx multi-tab)
+// Col A=category header, Col B=description
+// Col G=MSRP, Col K & M=cost (take lesser)
+// Year from first few rows
+// ═══════════════════════════════════════════
+const NSP_CAT = {
+  'Boat & Motor':'Boat & Motor','Boat/Motor':'Boat & Motor','Boat / Motors':'Boat & Motor',
+  'Yamaha Motor Packages':'Boat & Motor','Mercury Motor Packages':'Boat & Motor',
+  'Stereo Upgrade':'Accessories','Stereo & Electrical':'Accessories','Stereo and Electrical':'Accessories',
+  'Electronics':'Accessories','Electronics Upgrades':'Accessories','Electronics/ Equipment':'Accessories',
+  'Optional Electronics':'Accessories','Electrical':'Accessories','Outriggers':'Accessories',
+  'Shadow Package':'Accessories','Shadow Series':'Accessories','Comfort Packages':'Accessories',
+  'Seating & Upholstery':'Accessories','Upper Station':'Accessories','Steering Systems':'Accessories',
+  'System Options':'Accessories','Top':'Accessories','Top Options':'Accessories',
+  'Hull Colors':'Hull Colors','Color Options':'Hull Colors','Boot Stripe':'Boot Stripe',
+};
+const NSP_KNOWN = new Set(Object.keys(NSP_CAT));
+const NSP_SKIP  = ['*Pricing','*pricing','Dealership','Pre-rig or','Normal Selling Price','All Models','Model'];
+
+function nspNormCat(s) {
+  if (!s) return null;
+  s = s.replace(/\n/g,' ').trim();
+  for (const [k,v] of Object.entries(NSP_CAT)) { if (s.trimEnd()===k.trimEnd()) return v; }
+  if (/Pre-Rig|Pre-rig|Transom|Starboard/i.test(s)) return 'Accessories';
+  if (s.startsWith('Yamaha EX')||s.startsWith('Mercury DTS')||/^Mercury\s+3/.test(s)) return 'Accessories';
+  if (s.startsWith('Boot Stripe')) return 'Boot Stripe';
+  if (s.startsWith('Shadow')) return 'Accessories';
+  if (/Helm Configuration|Choose 1/i.test(s)) return 'Accessories';
+  return s;
+}
+function nspYear(raw) {
+  for (let r=0; r<Math.min(5,raw.length); r++)
+    for (const c of raw[r]) {
+      if (typeof c==='number' && c>=2020&&c<=2035) return c;
+      if (typeof c==='string' && /2026/.test(c)) return 2026;
+      if (typeof c==='string' && /2023/.test(c)) return 2023;
+    }
+  return null;
+}
+function nspPC(row) {
+  const msrp  = safeNum(row[6]);
+  const cands = [safeNum(row[10]),safeNum(row[12])].filter(v=>v!=null);
+  return { msrp, cost: cands.length ? Math.min(...cands) : null };
+}
+function nspIsCat(a) {
+  const s = String(a).trim();
+  return NSP_KNOWN.has(s)||/Helm Configuration|Choose 1/i.test(s)||
+         /Pre-Rig|Pre-rig|Transom|Starboard/i.test(s)||
+         s.startsWith('Yamaha EX')||s.startsWith('Mercury DTS')||
+         /^Mercury\s+3/.test(s)||s.startsWith('Shadow');
+}
+
+function parseNSP(file) {
+  const wb = XLSX.read(file.buf, {type:'array',cellDates:false});
+  const sheets = wb.SheetNames.filter(s=>s!=='2026MY Changes'&&s!=='Information'&&s!=='Data');
+  sheets.forEach(sn => {
+    const raw = XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:null,raw:true});
+    const year = nspYear(raw);
+    let cat=null, cnt=1;
+
+    function add(desc,c,msrp,cost) { addRow(sn,cnt++,desc,c,msrp,cost,year,sn); }
+    function bootStripe(row,first) {
+      const pb=safeNum(row[3])||safeNum(row[6]), cs=safeNum(row[10]);
+      add(first,'Boot Stripe',pb,cs);
+      const s2=row[5]!=null?cleanStr(row[5]):null;
+      if(s2) { const pf=safeNum(row[6])||pb; add(s2,'Boot Stripe',pf,cs); }
+    }
+
+    for (const row of raw) {
+      const A=row[0]!=null?cleanStr(row[0]):null;
+      const B=row[1]!=null?cleanStr(row[1]):null;
+      const C=row[2]!=null?cleanStr(row[2]):null;
+      const F=row[5]!=null?cleanStr(row[5]):null;
+      if(A){if(NSP_SKIP.some(p=>A.startsWith(p)))continue;if(/Normal Selling Price/.test(A)&&(/^2026|^2023|^\s/.test(A)||/^20\d\d/.test(A))continue;}
+      if(A&&nspIsCat(A)){
+        cat=nspNormCat(A);
+        if(B){const{msrp,cost}=nspPC(row);
+          if(cat==='Hull Colors'&&C&&/hull color/i.test(C)){add(`${B} (Full hull color)`,'Hull Colors',msrp,cost);if(F&&/hull color/i.test(F))add(`${B} (Two toned hull color)`,'Hull Colors',msrp,cost);}
+          else if(cat==='Boot Stripe')bootStripe(row,B);
+          else add(B,cat,msrp,cost);}
+        continue;
+      }
+      if(!A&&B&&cat){const{msrp,cost}=nspPC(row);
+        if(cat==='Hull Colors'&&C&&/hull color/i.test(C)){add(`${B} (Full hull color)`,'Hull Colors',msrp,cost);if(F&&/hull color/i.test(F))add(`${B} (Two toned hull color)`,'Hull Colors',msrp,cost);}
+        else if(cat==='Boot Stripe')bootStripe(row,B);
+        else if(msrp!=null||cost!=null)add(B,cat,msrp,cost);
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+// PARSER: JEANNEAU (.xls one file per model)
+// Col E=description, Col H="W/O VAT $" (cost)
+// Model=row 0 col E, Year from "C20xx" in row 4
+// First line of cell → Description, rest → Details
+// ═══════════════════════════════════════════
+
+const JN_SKIP=['VERSIONS','EX-FACTORIES','ORDER :','DEALER  NET','C2026','Jeanneau','105 Eastern','Annapolis','Tel ','Fax ','Total EXCL','  A:','EXP:','OPTIONS'];
+function jnNormCat(s){s=s.trim().toUpperCase();if(/PROPULSION|ENGINE\b/.test(s))return 'Boat & Motor';if(/HULL\s*$|^HULL$/.test(s))return 'Hull Colors';return 'Accessories';}
+function jnIsSectionHdr(row){const b=row[1],c=row[2],d=row[3],e=row[4],h=row[7];return(!b||!cleanStr(b))&&(!c||!cleanStr(c))&&(!d||!cleanStr(d))&&e&&cleanStr(e)&&typeof h!=='number';}
+
+function jnSplitDescDetails(rawText){
+  const lines=rawText.replace(/\r/g,'').split('\n');
+  const desc=lines[0].trim();
+  const detailLines=lines.slice(1).map(l=>l.trim()).filter(l=>l&&!l.startsWith('Pricing ex-USA')&&!l.startsWith('Including factory'));
+  return{desc,details:detailLines.length?detailLines.join('\n'):null};
+}
+
+function parseJeanneau(file) {
+  const wb  = XLSX.read(file.buf,{type:'array',raw:true});
+  const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:null,raw:true});
+  let model = raw[0]&&raw[0][4] ? cleanStr(raw[0][4]) : file.name.replace(/\.xls.?$/i,'').replace(/[-_]/g,' ').trim();
+  model = model.replace(/\s+/g,' ').trim();
+  let year  = 2026;
+  if(raw[4]&&raw[4][4]){const m=String(raw[4][4]).match(/C(\d{4})/);if(m)year=parseInt(m[1]);}
+  let cat=null, cnt=1;
+  for(const row of raw){
+    const eRaw=row[4]!=null?String(row[4]):'';
+    const e=eRaw.trim(), h=row[7];
+    const d=row[3]!=null?cleanStr(row[3]):'', b=row[1]!=null?cleanStr(row[1]):'';
+    if(jnIsSectionHdr(row)){if(JN_SKIP.some(s=>e.startsWith(s))){cat=null;continue;}cat=jnNormCat(e);continue;}
+    if(b&&e&&d&&cat){
+      if(e.startsWith('EX-FACTORIES'))continue;
+      if(typeof h==='string'&&h.trim()==='Standard')continue;
+      const cost=(typeof h==='number'&&h>0)?h:null;
+      const{desc,details}=jnSplitDescDetails(eRaw);
+      parsedRows.push({model,optNum:`${model.replace(/\s+/g,'')}-${String(cnt).padStart(2,'0')}`,desc,cat,msrp:null,cost,fromYear:year,toYear:year,models:model,details});
+      cnt++;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// PARSER: TIDEWATER (.xlsx multi-tab)
+// Col B=section header, Col C=description
+// Col E=Net Price (cost), Col F=MAP Price (MSRP)
+// Col H=group id → list_byb_groups tab
+// Year from filename
+// ═══════════════════════════════════════════
+function parseTidewater(file) {
+  const wb = XLSX.read(file.buf,{type:'array',cellDates:false});
+  const groupMap={};
+  if(wb.Sheets['list_byb_groups']){
+    XLSX.utils.sheet_to_json(wb.Sheets['list_byb_groups'],{header:1,defval:null,raw:true}).slice(1)
+      .forEach(r=>{if(r[0]&&r[1])groupMap[r[0]]=String(r[1]);});
+  }
+  function twCat(section,gid){
+    if(gid&&groupMap[gid]){const g=groupMap[gid];if(/Power|Engine/i.test(g))return 'Boat & Motor';if(/Exterior|Color/i.test(g)&&!/Interior/i.test(g))return 'Hull Colors';return 'Accessories';}
+    const s=section?section.toUpperCase():'';
+    if(/MOTOR|ENGINE|POWER|PRE.?RIG/i.test(s))return 'Boat & Motor';
+    if(/HULL COLOR|HULL SIDE|HULL BOTTOM|FULL HULL|WATERLINE/i.test(s))return 'Hull Colors';
+    return 'Accessories';
+  }
+  const yrM=file.name.match(/20(\d{2})/);
+  const year=yrM?parseInt('20'+yrM[1]):2025;
+  wb.SheetNames.filter(s=>s!=='list_byb_groups').forEach(sn=>{
+    const raw=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:null,raw:true});
+    let section=null, cnt=1;
+    for(const row of raw){
+      if(row[3]==='PART NUMBER')continue;
+      if(!row.some(v=>v!=null))continue;
+      const colB=row[1]!=null?cleanStr(row[1]):null;
+      const colC=row[2]!=null?cleanStr(row[2]):null;
+      if(colB&&!colC&&row[3]==null){section=colB;continue;}
+      if(colC){
+        const cost=safeNum(row[4]),msrp=safeNum(row[5]);
+        if(cost==null&&msrp==null&&row[3]==null)continue;
+        addRow(sn,cnt++,colC,twCat(section,row[7]),msrp,cost,year,sn);
+      }
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════
+// PARSER: PIONEER BOATS (purchase agreement .xlsx)
+// Two-column layout: options in col C+D and col F+G
+// Section headers: text in col C or F with no price
+// Motor rows (R9-R14): Yamaha (col C/D) & Suzuki (col F/G)
+// Model=R2 col F, Year from "20xx PURCHASE AGREEMENT" in R3
+// Price = dealer net (no MSRP in this file type)
+// Color options with no price are still included
+// ═══════════════════════════════════════════
+
+// ═══════════════════════════════════════════
+// PARSER: JEANNEAU MSRP (.xls multi-sheet)
+// 23 model sheets, each tab = one model
+// Col A=flag, Col B=part code, Col C=description (multi-line: first line=desc, rest=details)
+// Col F=Recommended retail price (MSRP) — no dealer cost in this file
+// Model name = row 1 col C, skip 'Standard' items
+// Section headers: col A & B empty, col C has section name, col F empty
+// ═══════════════════════════════════════════
+function parseJeanneauMSRP(file) {
+  const wb = XLSX.read(file.buf, {type:'array', raw:true});
+
+  // Skip any sheet that looks like a cover/index (less than 5 data rows)
+  const modelSheets = wb.SheetNames.filter(sn => {
+    const ws = wb.Sheets[sn];
+    if (!ws['!ref']) return false;
+    const r = XLSX.utils.decode_range(ws['!ref']);
+    return r.e.r >= 5;
+  });
+
+  // Top-level category keywords — everything belongs to one of these three
+  const TOP_LEVEL = ['VERSIONS', 'PACKS', 'OPTIONS'];
+
+  modelSheets.forEach(sn => {
+    const ws  = wb.Sheets[sn];
+    const ref = XLSX.utils.decode_range(ws['!ref'] || 'A1:F100');
+    const maxR = ref.e.r;
+
+    // Build clean grid
+    const grid = [];
+    for (let r = 0; r <= maxR; r++) {
+      const row = [];
+      for (let c = 0; c <= 5; c++) {
+        const cell = ws[XLSX.utils.encode_cell({r, c})];
+        row.push(cell ? cell.v : null);
+      }
+      grid.push(row);
+    }
+
+    // Model name = row 0 col 2
+    const model = grid[0] && grid[0][2] ? String(grid[0][2]).trim() : sn.replace(/-\w+$/, '').trim();
+    const modelClean = model.replace(/\s+/g,' ').trim();
+
+    // Year from filename, default 2026
+    let year = 2026;
+    const yrM = file.name.match(/(20\d\d)/);
+    if (yrM) year = parseInt(yrM[1]);
+
+    function splitDescDetails(raw) {
+      if (!raw) return { desc: '', details: null };
+      const lines = String(raw).replace(/\r/g,'').split('\n');
+      const desc = lines[0].trim();
+      const detailLines = lines.slice(1).map(l=>l.trim())
+        .filter(l => l && !l.startsWith('Pricing ex-USA') && !l.startsWith('Including factory'));
+      return { desc, details: detailLines.length ? detailLines.join('\n') : null };
+    }
+
+    // currentCat tracks the TOP-LEVEL section (Versions / Packs / Options)
+    let currentCat = null, cnt = 1;
+
+    function add(rawDesc, msrp) {
+      const { desc, details } = splitDescDetails(rawDesc);
+      if (!desc) return;
+      parsedRows.push({
+        model: modelClean, optNum: `${modelClean.replace(/\s+/g,'')}-${String(cnt).padStart(2,'0')}`,
+        desc, cat: currentCat || 'Options',
+        msrp: msrp || null, cost: null,
+        fromYear: year, toYear: year,
+        models: modelClean, details
+      });
+      cnt++;
+    }
+
+    for (let ri = 3; ri < grid.length; ri++) {
+      const row  = grid[ri];
+      const colA = row[0] != null ? String(row[0]).trim() : '';
+      const colB = row[1] != null ? String(row[1]).trim() : '';
+      const colC = row[2];
+      const colF = row[5];
+
+      const cStr  = colC != null ? String(colC).split('\n')[0].trim() : '';
+      const price = (typeof colF === 'number' && colF > 0) ? colF : null;
+      const isStd = (typeof colF === 'string' && colF.trim() === 'Standard');
+
+      // Section header: col A and B empty, col C has text, no price
+      if (!colA && !colB && cStr && price === null && !isStd) {
+        const upper = cStr.trim().toUpperCase();
+        // Check if this is a TOP-LEVEL category
+        const topMatch = TOP_LEVEL.find(t => upper === t || upper.startsWith(t));
+        if (topMatch) {
+          // Normalize: VERSIONS / PACKS / OPTIONS (trim "OTHER VERSIONS" → still Versions)
+          if (upper.includes('VERSION'))    currentCat = 'Versions';
+          else if (upper.includes('PACK'))  currentCat = 'Packs';
+          else if (upper.includes('OPTION'))currentCat = 'Options';
+        }
+        // Sub-sections (PROPULSION, MOORING, etc.) — don't change currentCat
+        continue;
+      }
+
+      // Skip standard items and empty rows
+      if (isStd || !cStr) continue;
+
+      // Data row: has flag code, part code, description and price
+      if (colA && colB && colC && price !== null) {
+        add(colC, price);
+      }
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════
+// PARSER: JEANNEAU ORDER SHEET (.xls, 4-col)
+// Col A=qty flag (1=selected), Col B=description+details
+// Col C=price (MSRP), Col D=total (ignore)
+// Section headers: col A empty, col B has section name, col C empty
+// Categories: Versions / Packs / Options (top-level only)
+// Model name = sheet tab name, Year from filename
+// ═══════════════════════════════════════════
+function parseJeanneauOrder(file) {
+  const wb  = XLSX.read(file.buf, {type:'array', raw:true});
+
+  wb.SheetNames.forEach(sn => {
+    const ws  = wb.Sheets[sn];
+    if (!ws['!ref']) return;
+    const ref  = XLSX.utils.decode_range(ws['!ref']);
+    const maxR = ref.e.r;
+
+    // Build clean grid — 4 cols only
+    const grid = [];
+    for (let r = 0; r <= maxR; r++) {
+      const row = [];
+      for (let c = 0; c <= 3; c++) {
+        const cell = ws[XLSX.utils.encode_cell({r, c})];
+        row.push(cell ? cell.v : null);
+      }
+      grid.push(row);
+    }
+
+    // Model = sheet name, cleaned up
+    const model = sn.replace(/_/g,' ').replace(/\s+/g,' ').trim();
+
+    // Year from filename
+    let year = 2026;
+    const yrM = file.name.match(/(20\d\d)/);
+    if (yrM) year = parseInt(yrM[1]);
+
+    function splitDescDetails(raw) {
+      if (!raw) return { desc: '', details: null };
+      const lines = String(raw).replace(/\r/g,'').split('\n');
+      const desc = lines[0].trim();
+      const detailLines = lines.slice(1).map(l=>l.trim())
+        .filter(l => l && !l.startsWith('Pricing ex-USA') && !l.startsWith('Including factory'));
+      return { desc, details: detailLines.length ? detailLines.join('\n') : null };
+    }
+
+    const TOP_CATS = ['VERSIONS','PACKS','OPTIONS'];
+    const STOP_KW  = ['SUBTOTAL','FREIGHT','TOTAL','Call:','Price is'];
+    let currentCat = null, cnt = 1;
+
+    function add(rawDesc, msrp) {
+      const { desc, details } = splitDescDetails(rawDesc);
+      if (!desc) return;
+      parsedRows.push({
+        model, optNum: `${model.replace(/\s+/g,'')}-${String(cnt).padStart(2,'0')}`,
+        desc, cat: currentCat || 'Options',
+        msrp: msrp || null, cost: null,
+        fromYear: year, toYear: year,
+        models: model, details
+      });
+      cnt++;
+    }
+
+    for (let ri = 1; ri < grid.length; ri++) {
+      const row  = grid[ri];
+      const colA = row[0];
+      const colB = row[1];
+      const colC = row[2];
+
+      const bStr = colB != null ? String(colB).split('\n')[0].trim() : '';
+
+      // Stop at footer rows
+      if (bStr && STOP_KW.some(k => bStr.startsWith(k))) break;
+      if (colA != null && typeof colA === 'string' && STOP_KW.some(k => String(colA).startsWith(k))) break;
+
+      // Section header: col A empty/null, col B has text, col C empty/null
+      const aEmpty = colA == null || String(colA).trim() === '';
+      const cEmpty = colC == null || String(colC).trim() === '';
+
+      if (aEmpty && bStr && cEmpty) {
+        const upper = bStr.toUpperCase().trim();
+        // Check top-level category
+        if (upper === 'VERSIONS' || upper.startsWith('PROPULSION') || upper.startsWith('OTHER VERSION') || upper.startsWith('UPHOLSTERY') || upper.startsWith('TRIM LEVEL') || upper.startsWith('LAYOUT')) {
+          if (upper === 'VERSIONS') currentCat = 'Versions';
+          // sub-sections under Versions don't change top-level cat
+        } else if (upper === 'OPTIONS') {
+          currentCat = 'Options';
+        } else if (upper === 'PACKS' || upper.startsWith('PACK')) {
+          currentCat = 'Packs';
+        }
+        // All other sub-sections (MOORING, EQUIPMENT, etc.) keep current top-level cat
+        continue;
+      }
+
+      // Data row: col B has description, col C has a price (number)
+      const price = (typeof colC === 'number' && colC > 0) ? colC : null;
+      const isStd = (typeof colC === 'string' && colC.trim() === 'Standard');
+
+      if (bStr && (price !== null || isStd)) {
+        if (!isStd && price !== null) {
+          add(colB, price);
+        }
+        // Skip Standard items (no price to import)
+      }
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════
+// PARSER: GRADY-WHITE (.xlsx multi-tab)
+// 27 model sheets, each tab = one model
+// Row 1: 'Grady-White Boats', Row 2: '[Model Name] Model Year [YYYY]'
+// Col A = section header (Options / Hull Color / Top Options / Seating)
+// Col B = description, Col C = MSRP price
+// Motor rows = before first section header (col A null, col B & C have data)
+// Skip: Total row, $0 rows, negative prices, 'To be determined', 'Delete Engine Sealer'
+// ═══════════════════════════════════════════
+function parseGradyWhite(file) {
+  const wb = XLSX.read(file.buf, {type:'array', cellDates:false});
+
+  const SKIP_DESC = ['Total','Delete Engine Sealer','Proposition 65','Canadian Conformity',
+                     'C. E. Certification','Whole Hull Gel Color','Austrailian Outlet'];
+
+  wb.SheetNames.forEach(sn => {
+    const ws  = wb.Sheets[sn];
+    if (!ws['!ref']) return;
+    const ref  = XLSX.utils.decode_range(ws['!ref']);
+    const maxR = ref.e.r;
+
+    // Build clean grid
+    const grid = [];
+    for (let r = 0; r <= maxR; r++) {
+      const row = [];
+      for (let c = 0; c <= 4; c++) {
+        const cell = ws[XLSX.utils.encode_cell({r, c})];
+        row.push(cell ? cell.v : null);
+      }
+      grid.push(row);
+    }
+
+    // Model name & year from row index 1
+    const titleRow = grid[1] && grid[1][0] ? String(grid[1][0]).trim() : sn;
+    const yrM  = titleRow.match(/(20\d\d)/);
+    const year  = yrM ? parseInt(yrM[1]) : 2027;
+    const model = titleRow.replace(/\s*Model Year\s*\d{4}\s*$/i,'').trim() || sn;
+
+    // Model number for use in option IDs (e.g. "GW-180" → "180")
+    const modelNum = sn.replace(/^GW-/i,'').trim();
+
+    let currentCat = 'Boat & Motor';
+    let cnt = 1;
+
+    function gwPrice(v) {
+      if (v == null) return null;
+      if (typeof v === 'number' && isFinite(v) && v > 0) return v;
+      return null;
+    }
+
+    function buildOptNum(desc, cat) {
+      // For Hull Color: option # = "{cleaned desc} {modelNum}"  e.g. "Gel Coat - Celestial Blue 180"
+      // For all others: sequential model-based number
+      if (cat === 'Hull Color') {
+        const cleanDesc = desc.trim().replace(/\s*-\s*/g,' - ').replace(/\s+/g,' ');
+        return `${cleanDesc} ${modelNum}`;
+      }
+      return `${model}-${String(cnt).padStart(2,'0')}`;
+    }
+
+    function add(desc, msrp) {
+      if (!desc) return;
+      const cleanDesc = desc.trim().replace(/\s*:\s*$/, ''); // strip trailing colon
+      const optNum = buildOptNum(cleanDesc, currentCat);
+      parsedRows.push({
+        model, optNum,
+        desc: currentCat === 'Hull Color' ? optNum : cleanDesc,
+        cat: currentCat,
+        msrp, cost: null,
+        fromYear: year, toYear: year,
+        models: model, details: null
+      });
+      cnt++;
+    }
+
+    for (let ri = 4; ri < grid.length; ri++) {
+      const row  = grid[ri];
+      const colA = row[0];
+      const colB = row[1];
+      const colC = row[2];
+
+      const aStr  = colA != null ? String(colA).trim() : '';
+      const bStr  = colB != null ? String(colB).split('\n')[0].trim() : '';
+      const price = gwPrice(colC);
+
+      if (aStr === 'Total' || bStr === 'Total') break;
+
+      // Section header: col A has text, col B and C empty
+      if (aStr && !bStr && colC == null) {
+        currentCat = aStr;
+        continue;
+      }
+
+      if (!bStr) continue;
+      if (SKIP_DESC.some(s => bStr.startsWith(s))) continue;
+      if (typeof colC === 'string' && colC.trim() === 'To be determined') continue;
+      if (price !== null && price <= 0) continue;
+
+      if (price !== null) add(bStr, price);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+// PARSER: SPORTSMAN BOATS ORDER FORM (.xlsx)
+// Single-sheet dealer order form template.
+// Rows 7-22, cols A/B/D/E/F = standard included features (no price)
+//   -> Category "Standard Options", price blank, Is Standard = TRUE
+// "Engines" section (col A desc, col B price) -> Category "Engines"
+// "Options" section (col A desc, col B price) -> Category "Options"
+// "Color Selection" (col E, hull/bottom/HT color names, no price)
+//   -> Category "Color Selection"
+// "Upholstery Color" (col E, no price) -> Category "Upholstery Color"
+// "Powder Coating Selection" (col E, no price) -> Category "Powder Coating Selection"
+// Model = filename (e.g. "212 Open"); Year = parsed from the title row
+// ═══════════════════════════════════════════
+function parseSportsman(file) {
+  const wb  = XLSX.read(file.buf, {type:'array', raw:true});
+  const raw = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:null, raw:true});
+
+  const model = file.name.replace(/\.xlsx?$/i,'').replace(/[-_]/g,' ').replace(/\s+/g,' ').trim();
+  let year = 2026;
+  for (let i = 0; i < 6 && i < raw.length; i++) {
+    const t = raw[i] && raw[i][0] != null ? String(raw[i][0]) : '';
+    const m = t.match(/(20\d{2})/);
+    if (m) { year = parseInt(m[1]); break; }
+  }
+
+  let cnt = 1;
+  function add(desc, cat, price, isStandard) {
+    const d = desc != null ? cleanStr(desc) : '';
+    if (!d) return;
+    parsedRows.push({
+      model, optNum: `SPM${model.replace(/\s+/g,'')}-${String(cnt).padStart(2,'0')}`,
+      desc: d, cat,
+      msrp: price != null ? price : null,
+      cost: null,
+      fromYear: year, toYear: year,
+      models: model, details: null,
+      isStandard: !!isStandard,
+    });
+    cnt++;
+  }
+
+  function findRow(colIdx, matcher, fromRow) {
+    for (let r = fromRow; r < raw.length; r++) {
+      const v = raw[r] && raw[r][colIdx] != null ? cleanStr(raw[r][colIdx]) : '';
+      if (matcher(v)) return r;
+    }
+    return -1;
+  }
+
+  const engineHdrRow  = findRow(0, v => v.toUpperCase() === 'ENGINES', 0);
+  const optionsHdrRow = findRow(0, v => v.toUpperCase() === 'OPTIONS', 0);
+  const colorHdrRow   = findRow(4, v => v.toUpperCase() === 'COLOR SELECTION', 0);
+  const upholHdrRow   = findRow(4, v => v.toUpperCase() === 'UPHOLSTERY COLOR', 0);
+  const powderHdrRow  = findRow(4, v => v.toUpperCase() === 'POWDER COATING SELECTION', 0);
+
+  // ── Standard Options grid (cols A,B,D,E,F; rows before the Engines header) ──
+  const stdStartRow = 6; // Excel row 7
+  const stdEndRow   = engineHdrRow > 0 ? engineHdrRow : raw.length;
+  const stdCols = [0,1,3,4,5];
+  for (let r = stdStartRow; r < stdEndRow; r++) {
+    const row = raw[r];
+    if (!row) continue;
+    for (const c of stdCols) {
+      const v = row[c];
+      if (v != null && cleanStr(v)) add(v, 'Standard Options', null, true);
+    }
+  }
+
+  // ── Engines section ──
+  if (engineHdrRow >= 0) {
+    const end = optionsHdrRow >= 0 ? optionsHdrRow : raw.length;
+    for (let r = engineHdrRow + 1; r < end; r++) {
+      const row = raw[r];
+      if (!row) continue;
+      const desc = row[0];
+      if (desc == null || !cleanStr(desc)) continue;
+      add(desc, 'Engines', safeNum(row[1]), false);
+    }
+  }
+
+  // ── Options section ──
+  if (optionsHdrRow >= 0) {
+    for (let r = optionsHdrRow + 1; r < raw.length; r++) {
+      const row = raw[r];
+      if (!row) continue;
+      const desc = row[0];
+      if (desc == null || !cleanStr(desc)) continue;
+      const upper = cleanStr(desc).toUpperCase();
+      if (/^TOTAL|^RIGGING|^FINAL SALE|^NJ SALES TAX|^DMV FEE/.test(upper)) break;
+      const price = safeNum(row[1]);
+      if (price == null) continue;
+      add(desc, 'Options', price, false);
+    }
+  }
+
+  // ── Color / finish selection lists (col E, no price) ──
+  function addColorList(startRow, endRow, catName) {
+    if (startRow < 0) return;
+    for (let r = startRow + 1; r < endRow; r++) {
+      const row = raw[r];
+      if (!row) continue;
+      const v = row[4];
+      if (v == null || !cleanStr(v)) continue;
+      const upper = cleanStr(v).toUpperCase();
+      if (/^TOTAL|^RIGGING|^FINAL SALE|^NJ SALES TAX|^DMV FEE/.test(upper)) break;
+      add(v, catName, null, false);
+    }
+  }
+  const afterColor = upholHdrRow >= 0 ? upholHdrRow : (powderHdrRow >= 0 ? powderHdrRow : raw.length);
+  const afterUphol = powderHdrRow >= 0 ? powderHdrRow : raw.length;
+  addColorList(colorHdrRow, afterColor, 'Color Selection');
+  addColorList(upholHdrRow, afterUphol, 'Upholstery Color');
+  addColorList(powderHdrRow, raw.length, 'Powder Coating Selection');
+}
+
+function parsePioneer(file) {
+  // Read sheet — use defval:'' so every cell has a value, no undefined gaps
+  const wb   = XLSX.read(file.buf, {type:'array', cellDates:false});
+  const ws   = wb.Sheets[wb.SheetNames[0]];
+
+  // Get sheet dimensions
+  const ref  = XLSX.utils.decode_range(ws['!ref']||'A1:H60');
+  const maxR = ref.e.r;
+  const maxC = Math.max(ref.e.c, 6);
+
+  // Build a clean 2D array with explicit bounds — no surprises
+  const grid = [];
+  for(let r=0; r<=maxR; r++){
+    const row=[];
+    for(let c=0; c<=maxC; c++){
+      const addr = XLSX.utils.encode_cell({r,c});
+      const cell = ws[addr];
+      row.push(cell ? cell.v : null);
+    }
+    grid.push(row);
+  }
+
+  // Model: row index 1, col index 5
+  const model = grid[1]&&grid[1][5] ? String(grid[1][5]).trim() : wb.SheetNames[0];
+  let year = 2026;
+  if(grid[2]&&grid[2][2]){ const m=String(grid[2][2]).match(/(20\d\d)/); if(m) year=parseInt(m[1]); }
+
+  function pClean(v){
+    if(v==null||v===undefined)return null;
+    let s=String(v).trim();
+    if(!s||s===' ')return null;
+    if(s.startsWith('o '))s=s.slice(2).trim();
+    return s||null;
+  }
+  function pPrice(v){
+    if(v==null||v===undefined)return null;
+    if(typeof v==='number'&&isFinite(v)&&v>0)return v;
+    if(typeof v==='string'){
+      const f=parseFloat(v.replace(/[$,\s]/g,''));
+      return(!isNaN(f)&&f>0)?f:null;
+    }
+    return null;
+  }
+  function pCat(sec){
+    if(!sec)return 'Accessories';
+    const s=sec.trim().toUpperCase();
+    if(/YAMAHA|SUZUKI/.test(s))return 'Boat & Motor';
+    const map={'HULL':'Hull','PERFORMANCE':'Performance','COMFORT':'Comfort','ELECTRONICS':'Electronics','COVERS':'Covers'};
+    for(const[k,v] of Object.entries(map)){ if(s.replace(/\s+/g,'')===k) return v; }
+    return sec.trim();
+  }
+
+  const MOTOR_RI  = new Set([8,9,10,11,12,13]); // 0-indexed rows 9-14
+  const FOOTER_KW = ['Special Instructions','Revised','TOTAL','Total'];
+  let leftSec=null, rightSec=null, cnt=1;
+
+  function add(desc,cat,cost){
+    if(!desc)return;
+    parsedRows.push({
+      model, optNum:`${model}-${String(cnt).padStart(2,'0')}`,
+      desc, cat, msrp:null, cost:cost||null,
+      fromYear:year, toYear:year, models:model, details:null
+    });
+    cnt++;
+  }
+
+  for(let ri=8; ri<grid.length; ri++){
+    const row = grid[ri];
+
+    // Stop at footer
+    const firstVal = row.find(v=>v!=null);
+    if(firstVal!=null && FOOTER_KW.some(k=>String(firstVal).trim().startsWith(k))) break;
+
+    // Read cols by index
+    const colC=row[2], colD=row[3], colF=row[5], colG=row[6];
+    const cC=pClean(colC), cF=pClean(colF);
+    const pC=pPrice(colD), pF=pPrice(colG);
+    const cIsOpt = colC!=null && String(colC).trim().startsWith('o ');
+    const fIsOpt = colF!=null && String(colF).trim().startsWith('o ');
+
+    // Motor rows
+    if(MOTOR_RI.has(ri)){
+      if(cC&&cC!=='Yamaha'&&cC!=='Suzuki'&&!cC.startsWith('*')) add(cC,'Boat & Motor',pC);
+      if(cF&&cF!=='Yamaha'&&cF!=='Suzuki'&&!cF.startsWith('*')) add(cF,'Boat & Motor',pF);
+      continue;
+    }
+
+    // Left section header
+    if(cC && pC==null && !cIsOpt && !cC.startsWith('*') && !cC.startsWith('Package')){
+      leftSec=cC;
+      if     (cF && pF==null && !fIsOpt && !cF.startsWith('*')) rightSec=cF;
+      else if(cF && fIsOpt) add(cF, pCat(rightSec), pF);
+      continue;
+    }
+    // Right section header
+    if(cF && pF==null && !fIsOpt && !cF.startsWith('*')){
+      rightSec=cF;
+      if(cC && cIsOpt) add(cC, pCat(leftSec), pC);
+      continue;
+    }
+    // Data rows
+    if(cC && cIsOpt) add(cC, pCat(leftSec), pC);
+    if(cF && fIsOpt) add(cF, pCat(rightSec), pF);
+  }
+}
+
+// ═══════════════════════════════════════════
+// SHOW RESULTS
+// ═══════════════════════════════════════════
+const BADGE_CLS={'Boat & Motor':'b-bm','Accessories':'b-ac','Hull Colors':'b-hc','Boot Stripe':'b-bs','Hull':'b-hc','Performance':'b-bs','Comfort':'b-ac','Electronics':'b-ot','Covers':'b-ot'};
+
+function showResults(){
+  const models=[...new Set(parsedRows.map(r=>r.model))];
+  activeModel=models[0];
+
+  // Build dynamic stats — count every unique category actually present
+  const catCounts={};
+  parsedRows.forEach(r=>{ catCounts[r.cat]=(catCounts[r.cat]||0)+1; });
+  const catPills=Object.entries(catCounts)
+    .sort((a,b)=>b[1]-a[1])
+    .map(([cat,n])=>`<div class="stat-pill">${cat}: <strong>${n}</strong></div>`)
+    .join('');
+  document.getElementById('stats-bar').innerHTML=`
+    <div class="stat-pill">Total rows: <strong>${parsedRows.length}</strong></div>
+    <div class="stat-pill">Models: <strong>${models.length}</strong></div>
+    ${catPills}`;
+
+  const mg=document.getElementById('model-grid');
+  mg.innerHTML='';
+  models.forEach(m=>{
+    const b=document.createElement('button');
+    b.className='model-btn'+(m===activeModel?' active':'');
+    b.textContent=m; b.dataset.model=m;
+    b.onclick=()=>{ activeModel=m; document.querySelectorAll('.model-btn').forEach(x=>x.classList.toggle('active',x.dataset.model===m)); renderTable(m); };
+    mg.appendChild(b);
+  });
+
+  renderTable(activeModel);
+  document.getElementById('results-section').style.display='block';
+  document.getElementById('dl-section').style.display='block';
+  document.getElementById('dl-btn').onclick=downloadLightspeed;
+  showToast(`Parsed ${parsedRows.length} option rows across ${models.length} model(s)`);
+}
+
+function renderTable(model){
+  const rows=parsedRows.filter(r=>r.model===model);
+  document.getElementById('tbl-head').innerHTML='<tr><th>Option #</th><th>Category</th><th style="min-width:280px">Description</th><th>Manuf Price</th><th>Manuf Cost</th><th>Year</th></tr>';
+  const tb=document.getElementById('tbl-body'); tb.innerHTML='';
+  rows.slice(0,120).forEach(r=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td style="color:#7DD3FC;font-family:'DM Mono',monospace;">${r.optNum}</td>
+      <td><span class="cat-badge ${BADGE_CLS[r.cat]||'b-ot'}">${r.cat}</span></td>
+      <td style="white-space:normal;font-size:.68rem;line-height:1.5;">${r.desc}</td>
+      <td class="num">${fmt$(r.msrp)}</td>
+      <td class="num">${fmt$(r.cost)}</td>
+      <td class="num">${r.fromYear||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+  if(rows.length>120){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td colspan="6" style="text-align:center;color:var(--muted);padding:10px;">…and ${rows.length-120} more rows (all included in export)</td>`;
+    tb.appendChild(tr);
+  }
+}
+
+// ═══════════════════════════════════════════
+// DOWNLOAD — fills official Lightspeed template
+// ═══════════════════════════════════════════
+function downloadLightspeed(){
+  if (!parsedRows || parsedRows.length === 0) {
+    alert('No data to export. Please drop a file and click Run first.');
+    return;
+  }
+  const wb=XLSX.utils.book_new();
+  const N=Array(20).fill(null);
+  const info=[
+    [...N,'Option Category List Values','Type List Values','Option Group Type List Values','Is Standard List Values'],
+    [...N,'Other','Manufacturer','None','TRUE'],
+    [...N,null,'Dealer','Features','FALSE'],
+    [...N,null,'Both','Manufacturer Options',null],
+    ['Major Unit Sales Options - Upload Template',...Array(19).fill(null),null,null,'Dealer Options',nul],
+    [...Array(22).fill(null),'Engines',null],[...Array(22).fill(null),'Trailers',null],
+    ['Data Fields entered on the data worksheet tab',...Array(21).fill(null),'Colors',null],
+    ['(fields marked in red are required)'],['Option Number'],['Description'],
+    ['Category','A category must be selected from the list for each option. To add new categories add them in Lightspeed under Sales > Lists > Option Categories.'],
+    ['Type','Manufacturer, Dealer or Both (Defaults to Manufacturer if blank)'],
+    ['Manuf Price'],['Manuf Cost'],['Dealer Price'],
+    ['From Year','If blank All Years will be set'],['To Year'],
+    ['Makes','Comma Seperated, If blank All Makes will be set'],
+    ['Models','Comma Seperated, If blank All Models will be set'],['Details'],
+    ['Option Group Type','When Manufacturer: None, Manufacturer Options, Engines, Trailers, Colors. When Dealer: None, Dealer Options. When Both: None, Features, Manufacturer Options, Dealer Options, Engines, Trailers, Colors.'],
+    ['Is Standard','If blank will be set to False. True = checked in Lightspeed.'],
+  ];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(info),'Information');
+
+  const hdrs=['Option Number','Description','Category','Type','Manuf Price','Manuf Cost','Dealer Price','From Year','To Year','Makes','Models','Details','Option Group Type','Is Standard'];
+  const data=parsedRows.map(r=>[
+    r.optNum, r.desc, r.cat, 'Manufacturer',
+    r.msrp!=null?Math.round(r.msrp*100)/100:null,
+    r.cost!=null?Math.round(r.cost*100)/100:null,
+    null, r.fromYear, r.toYear, null, r.models, r.details||null, null, r.isStandard ? 'TRUE' : 'FALSE'
+  ]);
+  const ws=XLSX.utils.aoa_to_sheet([hdrs,...data]);
+  ws['!cols']=[{wch:24},{wch:72},{wch:22},{wch:14},{wch:16},{wch:16},{wch:14},{wch:12},{wch:10},{wch:14},{wch:22},{wch:20},{wch:22},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,'Data');
+
+  // Write to array buffer and trigger download via blob URL
+  // (works in SharePoint and all browsers,₪ — avoids XLSX.writeFile iframe blocking)
+  const base=(loadedFiles[0]?.name||'MU_Options').replace(/\.xlsx?$/i,'').slice(0,80);
+  const fname=`${base}_Lightspeed_Import.xlsx`;
+  try {
+    // Try XLSX.writeFile first (works in most browsers)
+    XLSX.writeFile(wb, fname);
+    showToast('Downloaded: '+fname);
+  } catch(e) {
+    // Fallback: manual blob download (works in SharePoint/iframe environments)
+    try {
+      const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+      const blob  = new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      const url   = URL.createObjectURL(blob);
+      const a     = document.createElement('a');
+      a.href      = url;
+      a.download  = fname;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(url); document.body.removeChild(a); }, 200);
+      showToast('Downloaded: '+fname);
+    } catch(e2) {
+      alert('Download failed: '+e2.message+'. Try opening this page in a full browser tab (not an embedded SharePoint viewer).');
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.app-tab').forEach(b => b.classList.toggle('active', b.getAttribute('onclick').includes(tab)));
+  document.getElementById('tab-options').classList.toggle('active',   tab==='options');
+  document.getElementById('tab-baseunits').classList.toggle('active', tab==='baseunits');
+  document.getElementById('tab-supplier').classList.toggle('active',  tab==='supplier');
+}
+
+// ═══════════════════════════════════════════
+// BASE UNITS — independent state
+// ═══════════════════════════════════════════
+let buFiles    = [];   // [{name, buf, size, type}]
+let buRows     = [];   // parsed base unit rows
+
+const BRAND_MAP = {
+  nsp:'NSP', jeanneau:'Jeanneau', jeanneau_msrp:'Jeanneau',
+  jeanneau_order:'Jeanneau', tidewater:'Tidewater',
+  pioneer:'Pioneer', gradywhite:'Grady-White', sportsman:'Sportsman',
+};
+
+// ── Drop zone ──
+function buDzOver(e)  { e.preventDefault(); document.getElementById('bu-drop-zone').style.borderColor='var(--accent)'; document.getElementById('bu-drop-zone').style.background='rgba(46,155,218,.07)'; }
+function buDzLeave()  { document.getElementById('bu-drop-zone').style.borderColor=''; document.getElementById('bu-drop-zone').style.background=''; }
+function buDzDrop(e)  { e.preventDefault(); buDzLeave(); buHandleFiles(Array.from(e.dataTransfer.files)); }
+function buFilesChosen(input) { buHandleFiles(Array.from(input.files)); input.value=''; }
+
+function buHandleFiles(files) {
+  files.forEach(f => {
+    if (buFiles.find(x => x.name === f.name)) return;
+    const r = new FileReader();
+    r.onload = e => {
+      const buf  = e.target.result;
+      const type = detectType(f.name, buf); // reuse existing detection
+      buFiles.push({name:f.name, buf, size:f.size, type});
+      buRenderFileList();
+      buCheckReady();
+    };
+    r.readAsArrayBuffer(f);
+  });
+}
+
+function buRenderFileList() {
+  const el = document.getElementById('bu-file-list');
+  el.innerHTML = buFiles.map((f,i) => `
+    <div class="file-chip">
+      <span class="fc-icon">📊</span>
+      <div class="fc-info">
+        <div class="fc-name">${f.name}</div>
+        <div class="fc-meta">${fmtBytes(f.size)} <span class="fc-type ${f.type}">${TYPE_LABELS[f.type]||f.type}</span></div>
+      </div>
+      <button class="fc-remove" onclick="buRemoveFile(${i})">✕</button>
+    </div>`).join('');
+  document.getElementById('bu-clear-all').style.display = buFiles.length > 1 ? 'inline-block' : 'none';
+}
+
+function buRemoveFile(i) { buFiles.splice(i,1); buRenderFileList(); buCheckReady(); buResetResults(); }
+function buClearAll()    { buFiles=[]; buRenderFileList(); buCheckReady(); buResetResults(); }
+
+function buCheckReady() {
+  const valid = buFiles.filter(f => f.type !== 'unknown');
+  const ready = valid.length > 0;
+  document.getElementById('bu-run-btn').disabled = !ready;
+  document.getElementById('bu-run-hint').textContent = ready
+    ? `${valid.length} file(s) ready — detected: ${[...new Set(valid.map(f=>TYPE_LABELS[f.type]))].join(', ')}. Click Run to parse.`
+    : 'Drop your file(s) above, then click Run to generate base units.';
+}
+
+function buResetResults() {
+  buRows = [];
+  document.getElementById('bu-results-section').style.display = 'none';
+  document.getElementById('bu-dl-section').style.display = 'none';
+}
+
+// ── Run ──
+function buRunAnalysis() {
+  buRows = [];
+  document.getElementById('bu-progress-wrap').style.display = 'block';
+  document.getElementById('bu-prog-fill').style.width = '0%';
+  document.getElementById('bu-run-btn').disabled = true;
+
+  setTimeout(() => {
+    try {
+      // Temporarily swap global state, run parsers, collect results, restore
+      const savedRows  = parsedRows;
+      const savedFiles = loadedFiles;
+      parsedRows  = [];
+      loadedFiles = buFiles;
+
+      buFiles.forEach(f => {
+        if (f.type==='nsp')            parseNSP(f);
+        if (f.type==='jeanneau')       parseJeanneau(f);
+        if (f.type==='jeanneau_msrp')  parseJeanneauMSRP(f);
+        if (f.type==='jeanneau_order') parseJeanneauOrder(f);
+        if (f.type==='tidewater')      parseTidewater(f);
+        if (f.type==='pioneer')        parsePioneer(f);
+        if (f.type==='gradywhite')     parseGradyWhite(f);
+        if (f.type==='sportsman')      parseSportsman(f);
+      });
+
+      // Build base units from parsed rows
+      buRows = buildBaseUnitsFromRows(parsedRows, buFiles);
+
+      // Restore global state
+      parsedRows  = savedRows;
+      loadedFiles = savedFiles;
+
+      document.getElementById('bu-prog-fill').style.width = '100%';
+      buShowResults();
+    } catch(err) {
+      alert('Parsing error: ' + err.message);
+      console.error(err);
+    }
+    document.getElementById('bu-progress-wrap').style.display = 'none';
+    document.getElementById('bu-run-btn').disabled = false;
+  }, 60);
+}
+
+// ── Build base units rows ──
+// Derive Unit Type from file type and model name
+function getUnitType(fileType, modelName) {
+  // Jeanneau sailboats vs powerboats — all in our files are powerboats
+  if (['jeanneau','jeanneau_msrp','jeanneau_order'].includes(fileType)) return 'Boat';
+  if (fileType === 'tidewater')   return 'Boat';
+  if (fileType === 'pioneer')     return 'Boat';
+  if (fileType === 'gradywhite')  return 'Boat';
+  if (fileType === 'nsp')         return 'Boat';
+  if (fileType === 'sportsman')   return 'Boat';
+  // Check model name keywords
+  const m = (modelName||'').toUpperCase();
+  if (/TRAILER/.test(m))  return 'Trailer';
+  if (/ENGINE|MOTOR/.test(m)) return 'Motor';
+  return 'Boat';  // default
+}
+
+// Class = first letter of Unit Type
+function getClass(unitType) {
+  return unitType ? unitType.charAt(0).toUpperCase() : 'B';
+}
+
+function buildBaseUnitsFromRows(rows, files) {
+  // Get make and file type from loaded files
+  let make = '', fileType = '';
+  for (const f of files) {
+    make     = BRAND_MAP[f.type] || make;
+    fileType = f.type || fileType;
+    if (make) break;
+  }
+
+  const isGradyWhite = files.some(f => f.type === 'gradywhite');
+  const units    = [];
+  const modelMap = {};
+
+  rows.forEach(r => {
+    const ft = files.find(f => f.type !== 'unknown')?.type || fileType;
+
+    if (isGradyWhite) {
+      if (r.cat === 'Boat & Motor') {
+        const price    = r.msrp || r.cost || null;
+        const unitType = getUnitType('gradywhite', r.desc);
+        units.push({
+          model:     r.model,
+          modelName: r.desc,
+          year:      r.fromYear,
+          msrp:      price,
+          cost:      price,
+          make:      'Grady-White',
+          unitType,
+          unitClass: getClass(unitType),
+        });
+      }
+    } else {
+      if (!modelMap[r.model]) {
+        const unitType = getUnitType(ft, r.model);
+        modelMap[r.model] = {
+          model:     r.model,
+          modelName: r.model,
+          year:      r.fromYear,
+          msrp:      null,
+          cost:      null,
+          make,
+          unitType,
+          unitClass: getClass(unitType),
+        };
+      }
+      const m = modelMap[r.model];
+      if (r.cat === 'Boat & Motor' && m.msrp === null) {
+        m.msrp = r.msrp || r.cost || null;
+        m.cost = m.msrp;
+      }
+      if (m.msrp === null && (r.msrp || r.cost)) {
+        m.msrp = r.msrp || r.cost;
+        m.cost = m.msrp;
+      }
+    }
+  });
+
+  if (!isGradyWhite) Object.values(modelMap).forEach(u => units.push(u));
+  return units;
+}
+
+// ── Results preview ──
+function buShowResults() {
+  const units = buRows;
+  document.getElementById('bu-stats').innerHTML = `
+    <div class="stat-pill">Total models: <strong>${units.length}</strong></div>
+    <div class="stat-pill">With MSRP: <strong>${units.filter(u=>u.msrp).length}</strong></div>
+    <div class="stat-pill">With Cost: <strong>${units.filter(u=>u.cost).length}</strong></div>`;
+
+  document.getElementById('bu-tbl-head').innerHTML =
+    '<tr><th>Model</th><th>Model Name</th><th>Make</th><th>Year</th><th>Class</th><th>Unit Type</th><th>Base Cost</th><th>MSRP</th></tr>';
+  const tb = document.getElementById('bu-tbl-body');
+  tb.innerHTML = '';
+  units.forEach(u => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#7DD3FC;font-family:'DM Mono',monospace;white-space:nowrap;">${u.model}</td>
+      <td style="color:#C8D8EC;">${u.modelName}</td>
+      <td>${u.make||'—'}</td>
+      <td class="num">${u.year||'—'}</td>
+      <td class="num">${u.unitClass||'—'}</td>
+      <td>${u.unitType||'—'}</td>
+      <td class="num">${fmt$(u.cost)}</td>
+      <td class="num">${fmt$(u.msrp)}</td>`;
+    tb.appendChild(tr);
+  });
+
+  document.getElementById('bu-results-section').style.display = 'block';
+  document.getElementById('bu-dl-section').style.display = 'block';
+  showToast(`Built ${units.length} base unit rows`);
+}
+
+// ── Download ──
+function downloadBaseUnits() {
+  const units = buRows;
+  const wb = XLSX.utils.book_new();
+
+  const info = [
+    ['Base Units - Marine',null],
+    ['Contact your Implementation Specialist for any questions.',null],
+    [null,null],['Data Fields entered on the data worksheet',null],
+    ['(fields marked in red are required)',null],
+    ['Stock Number',null],['New/Used','N or U, defaults to N'],
+    ['Year',null],['Make',null],['Model',null],['Model Name',null],
+    ['Class',null],['Unit Type',null],['Major Unit Sales Category',null],
+    ['Base Cost',null],['MSRP',null],['Body Type',null],['Color',null],
+    ['Hull Construction',null],['Fuel Type',null],
+    ['Length (ft)','Numeric Only'],['Beam (ft)','Numeric Only'],
+    ['Gross Vehcile Weight (GVWR) (lbs)','Numeric Only'],
+    ['Max Carry Capacity (lbs)','Numeric Only'],['Engine 1 HP','Numeric Only'],
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(info), 'Information');
+
+  const hdrs = ['Stock Number','New/Used','Year','Make','Model','Model Name','Class',
+                'Unit Type','Major Unit Sales Category','Base Cost','MSRP','Body Type',
+                'Color','Hull Construction','Fuel Type','Length (ft)','Beam (ft)',
+                'GVWR (lbs)','Max Carry Capacity (lbs)','Engine 1 HP'];
+  const data = units.map(u => [
+    null,                                              // Stock Number — blank
+    'N',                                               // New/Used
+    u.year,                                            // Year
+    u.make,                                            // Make
+    u.model,                                           // Model
+    u.modelName,                                       // Model Name
+    u.unitClass || null,                               // Class — first letter of unit type
+    u.unitType  || null,                               // Unit Type — Boat, Motor, Trailer
+    null,                                              // Major Unit Sales Category — blank for PM
+    u.cost!=null?Math.round(u.cost*100)/100:null,      // Base Cost
+    u.msrp!=null?Math.round(u.msrp*100)/100:null,      // MSRP
+    null,null,null,null,null,null,null,null,null        // remaining blank for PM
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([hdrs,...data]);
+  ws['!cols']=[{wch:14},{wch:10},{wch:8},{wch:18},{wch:28},{wch:28},{wch:14},
+               {wch:14},{wch:26},{wch:14},{wch:14},{wch:14},{wch:14},{wch:18},
+               {wch:12},{wch:12},{wch:12},{wch:16},{wch:22},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Data');
+
+  const base = (buFiles[0]?.name||'Base_Units').replace(/\.xlsx?$/i,'').slice(0,60);
+  const fname = `${base}_BaseUnits_Import.xlsx`;
+  try {
+    XLSX.writeFile(wb, fname);
+    showToast('Downloaded: '+fname);
+  } catch(e) {
+    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([wbout],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=fname;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},200);
+    showToast('Downloaded: '+fname);
+  }
+}
+
+
+// ═══════════════════════════════════════════
+// SUPPLIER MAPPING TAB
+// ═══════════════════════════════════════════
+let smFileBuf  = null;
+let smFileName = '';
+let smRows     = [];   // [{source, oldSupplier, supplierCode, supplierName}]
+
+function smDzOver(e)  { e.preventDefault(); document.getElementById('sm-drop-zone').style.borderColor='var(--accent)'; document.getElementById('sm-drop-zone').style.background='rgba(46,155,218,.07)'; }
+function smDzLeave()  { document.getElementById('sm-drop-zone').style.borderColor=''; document.getElementById('sm-drop-zone').style.background=''; }
+function smDzDrop(e)  { e.preventDefault(); smDzLeave(); if(e.dataTransfer.files[0]) smLoadFile(e.dataTransfer.files[0]); }
+function smFileChosen(input) { if(input.files[0]) smLoadFile(input.files[0]); input.value=''; }
+
+function smLoadFile(file) {
+  smFileName = file.name;
+  const r = new FileReader();
+  r.onload = e => {
+    smFileBuf = e.target.result;
+    // Show chip
+    document.getElementById('sm-file-chip').innerHTML = `
+      <div class="file-chip">
+        <span class="fc-icon">📊</span>
+        <div class="fc-info">
+          <div class="fc-name">${file.name}</div>
+          <div class="fc-meta">${fmtBytes(file.size)}</div>
+        </div>
+        <button class="fc-remove" onclick="smClear()">✕</button>
+      </div>`;
+    document.getElementById('sm-run-btn').disabled = false;
+    document.getElementById('sm-run-hint').textContent = 'File loaded — click Run to split supplier codes.';
+    smResetResults();
+  };
+  // Try as text first (CSV), fall back to ArrayBuffer (Excel)
+  if (/\.csv$/i.test(file.name)) {
+    r.readAsText(file);
+  } else {
+    r.readAsArrayBuffer(file);
+  }
+}
+
+function smClear() {
+  smFileBuf = null; smFileName = ''; smRows = [];
+  document.getElementById('sm-file-chip').innerHTML = '';
+  document.getElementById('sm-run-btn').disabled = true;
+  document.getElementById('sm-run-hint').textContent = 'Drop your supplier file above, then click Run.';
+  smResetResults();
+}
+
+function smResetResults() {
+  document.getElementById('sm-results-section').style.display = 'none';
+  document.getElementById('sm-dl-section').style.display = 'none';
+}
+
+function smRunAnalysis() {
+  smRows = [];
+  try {
+    let rawRows = [];
+
+    if (/\.csv$/i.test(smFileName) && typeof smFileBuf === 'string') {
+      // Parse CSV text
+      const lines = smFileBuf.split(/\r?\n/);
+      const headers = smParseCsvLine(lines[0]).map(h => h.trim().toLowerCase());
+      const srcIdx  = headers.findIndex(h => h === 'source');
+      const supIdx  = headers.findIndex(h => h === 'oldsupplier' || h === 'old supplier' || h === 'supplier');
+      lines.slice(1).forEach(line => {
+        if (!line.trim()) return;
+        const cols = smParseCsvLine(line);
+        const src  = srcIdx >= 0 ? (cols[srcIdx]||'').trim() : 'PARTSINVENTORY';
+        const sup  = supIdx >= 0 ? (cols[supIdx]||'').trim() : (cols[1]||'').trim();
+        if (sup) rawRows.push({source: src, oldSupplier: sup});
+      });
+    } else {
+      // Parse Excel
+      const wb = XLSX.read(smFileBuf, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, {defval:''});
+      data.forEach(row => {
+        // Find oldSupplier column (case-insensitive)
+        const keys = Object.keys(row);
+        const supKey = keys.find(k => /old.?supplier|supplier/i.test(k));
+        const srcKey = keys.find(k => /source/i.test(k));
+        const sup = supKey ? String(row[supKey]).trim() : '';
+        const src = srcKey ? String(row[srcKey]).trim() : 'PARTSINVENTORY';
+        if (sup) rawRows.push({source: src, oldSupplier: sup});
+      });
+    }
+
+    // Split CODE-Name on first hyphen
+    rawRows.forEach(({source, oldSupplier}) => {
+      const dashIdx = oldSupplier.indexOf('-');
+      let code = '', name = '';
+      if (dashIdx > 0) {
+        code = oldSupplier.slice(0, dashIdx).trim();
+        name = oldSupplier.slice(dashIdx + 1).trim();
+      } else {
+        // No dash — put whole thing in name, leave code blank
+        code = '';
+        name = oldSupplier;
+      }
+      smRows.push({source, oldSupplier, supplierCode: code, supplierName: name});
+    });
+
+    smShowResults();
+  } catch(err) {
+    alert('Error parsing supplier file: ' + err.message);
+    console.error(err);
+  }
+}
+
+// Simple CSV line parser (handles quoted fields)
+function smParseCsvLine(line) {
+  const result = []; let cur = ''; let inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += ch; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function smShowResults() {
+  document.getElementById('sm-stats').innerHTML = `
+    <div class="stat-pill">Total rows: <strong>${smRows.length}</strong></div>
+    <div class="stat-pill">With code: <strong>${smRows.filter(r=>r.supplierCode).length}</strong></div>
+    <div class="stat-pill">No code: <strong>${smRows.filter(r=>!r.supplierCode).length}</strong></div>`;
+
+  document.getElementById('sm-tbl-head').innerHTML =
+    '<tr><th>Source</th><th>Old Supplier</th><th>Supplier Code</th><th>Supplier Name</th></tr>';
+  const tb = document.getElementById('sm-tbl-body');
+  tb.innerHTML = '';
+  smRows.slice(0, 100).forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--muted);font-size:.68rem;">${r.source}</td>
+      <td style="color:#C8D8EC;font-family:'DM Mono',monospace;font-size:.68rem;">${r.oldSupplier}</td>
+      <td style="color:var(--teal);font-weight:700;font-family:'DM Mono',monospace;">${r.supplierCode||'—'}</td>
+      <td style="color:#C8D8EC;">${r.supplierName}</td>`;
+    tb.appendChild(tr);
+  });
+  if (smRows.length > 100) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="4" style="text-align:center;color:var(--muted);padding:10px;">…and ${smRows.length-100} more rows</td>`;
+    tb.appendChild(tr);
+  }
+
+  document.getElementById('sm-results-section').style.display = 'block';
+  document.getElementById('sm-dl-section').style.display = 'block';
+  showToast(`Split ${smRows.length} supplier rows`);
+}
+
+function smDownload() {
+  const wb = XLSX.utils.book_new();
+
+  // Data sheet — exact 4-column format matching the template
+  const headers = ['Source', 'oldSupplier', 'SupplierCode', 'SupplierName'];
+  const data = smRows.map(r => [
+    r.source,
+    r.oldSupplier,
+    r.supplierCode,
+    r.supplierName,
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+
+  // Style header row
+  const hdrStyle = {font:{bold:true}, fill:{fgColor:{rgb:'1F4E79'}}, color:{rgb:'FFFFFF'}};
+  ['A1','B1','C1','D1'].forEach(addr => {
+    if (ws[addr]) ws[addr].s = hdrStyle;
+  });
+
+  // Column widths
+  ws['!cols'] = [{wch:18}, {wch:55}, {wch:16}, {wch:55}];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Data');
+
+  const base = smFileName.replace(/\.(csv|xlsx?)$/i,'').slice(0,60);
+  const fname = `${base}_SupplierMapping.xlsx`;
+
+  try {
+    XLSX.writeFile(wb, fname);
+    showToast('Downloaded: ' + fname);
+  } catch(e) {
+    const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const blob  = new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url   = URL.createObjectURL(blob);
+    const a     = document.createElement('a');
+    a.href = url; a.download = fname;
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 200);
+    showToast('Downloaded: ' + fname);
+  }
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function showToast(msg,dur=3800){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.style.display='flex';
+  setTimeout(()=>t.style.display='none',dur);
+}
+</script>
+</body>
+</html>
