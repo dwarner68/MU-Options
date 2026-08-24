@@ -596,7 +596,7 @@ function parseNSP(file) {
       const B=row[1]!=null?cleanStr(row[1]):null;
       const C=row[2]!=null?cleanStr(row[2]):null;
       const F=row[5]!=null?cleanStr(row[5]):null;
-      if(A){if(NSP_SKIP.some(p=>A.startsWith(p)))continue;if(/Normal Selling Price/.test(A)&&(/^2026|^2023|^\s/.test(A)||/^20\d\d/.test(A))continue;}
+      if(A){if(NSP_SKIP.some(p=>A.startsWith(p)))continue;if(/Normal Selling Price/.test(A)&&(/^2026|^2023|^\s/.test(A)||/^20\d\d/.test(A)))continue;}
       if(A&&nspIsCat(A)){
         cat=nspNormCat(A);
         if(B){const{msrp,cost}=nspPC(row);
